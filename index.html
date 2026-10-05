@@ -78,6 +78,12 @@ button.chip{cursor:pointer}
 .sw.r{background:var(--red)}.sw.b{background:var(--blue)}.sw.g{background:var(--green)}
 .row{display:flex;gap:6px}
 .hint{max-width:270px;margin:0;font-size:12px;color:var(--fg3)}
+#cap{width:150px;text-align:right}
+.lnk{padding:0;color:var(--fg2);font-size:12px;text-decoration:underline;text-align:left}
+.lnk:hover{color:var(--fg)}
+.cap .seg button{padding:2px 9px;font-size:12px}
+.pv2{margin:-8px 2px 0;font:12px/1.6 var(--mono);color:var(--fg2)}
+.pv2:empty{display:none}
 .hint.bad{color:var(--fg)}
 .how{font-size:13px;color:var(--fg2)}
 .how summary{cursor:pointer}
@@ -168,7 +174,7 @@ button.chip{cursor:pointer}
 .lh h2{margin-right:auto}
 .srch{flex:0 1 250px}
 .tw{margin-top:12px;overflow-x:auto;border:1px solid var(--ln);border-radius:16px;background:var(--s1)}
-table{width:100%;min-width:920px;border-collapse:collapse}
+table{width:100%;min-width:1010px;border-collapse:collapse}
 th{padding:11px 14px;border-bottom:1px solid var(--ln);font:500 12px/1 var(--sans);color:var(--fg3);text-align:left;white-space:nowrap}
 td{padding:12px 14px;border-bottom:1px solid var(--ln);vertical-align:top}
 tbody tr:last-child td{border-bottom:0}
@@ -255,6 +261,7 @@ dialog::backdrop{background:rgb(4 6 8/.62);-webkit-backdrop-filter:blur(4px);bac
             <button type="button" data-cc="us"><i class="sw g"></i><i class="sw r"></i>해외식</button>
           </div>
         </div>
+        <div class="prow"><span>시작 자금</span><input id="cap" type="text" inputmode="decimal" placeholder="예: 50,000,000" autocomplete="off" aria-label="시작 자금"></div>
         <div class="prow"><span>백업</span><span class="row"><button class="btn" id="bak" type="button">저장</button><button class="btn" id="rst" type="button">불러오기</button></span></div>
         <div class="prow"><span>동기화</span><span class="row"><button class="btn" id="syn" type="button">연결하기</button><button class="btn" id="syx" type="button" hidden>해제</button></span></div>
         <p class="hint" id="synst" hidden></p>
@@ -277,12 +284,13 @@ dialog::backdrop{background:rgb(4 6 8/.62);-webkit-backdrop-filter:blur(4px);bac
         <div class="cap"><span class="lab">누적 손익</span><span class="lab" id="per"></span></div>
         <div id="led" role="img"></div>
         <div class="sub" id="sub"></div>
+        <div class="sub" id="bal"></div>
       </div>
       <div class="xr" id="xr"></div>
       <div class="formrow"><span class="lab">최근 20거래</span><div class="strip" id="strip"></div><span class="sub" id="streak"></span></div>
     </div>
     <div class="br">
-      <div class="cap"><span class="lab">자산 곡선</span><span class="legend"><span><i class="lgq"></i>누적 손익</span><span><i class="lgd"></i>고점 대비 낙폭</span></span></div>
+      <div class="cap"><span class="lab">자산 곡선</span><div class="seg" id="cseg" role="group" aria-label="자산 곡선 단위" hidden><button type="button" data-cu="pnl">손익</button><button type="button" data-cu="pct">수익률</button></div><span class="legend"><span><i class="lgq"></i>누적 손익</span><span><i class="lgd"></i>고점 대비 낙폭</span></span></div>
       <div id="chart"></div>
     </div>
   </section>
@@ -315,7 +323,7 @@ dialog::backdrop{background:rgb(4 6 8/.62);-webkit-backdrop-filter:blur(4px);bac
     </div>
     <div class="tw">
       <table>
-        <thead><tr><th>일시</th><th>종목</th><th>방향</th><th class="r">진입 → 청산</th><th class="r">수량</th><th class="r" id="thp">손익</th><th class="r">R</th><th>전략</th><th>실수</th></tr></thead>
+        <thead><tr><th>일시</th><th>종목</th><th>방향</th><th class="r">진입 → 청산</th><th class="r">수량</th><th class="r">투입</th><th class="r" id="thp">손익</th><th class="r">R</th><th>전략</th><th>실수</th></tr></thead>
         <tbody id="tb"></tbody>
       </table>
     </div>
@@ -328,6 +336,7 @@ dialog::backdrop{background:rgb(4 6 8/.62);-webkit-backdrop-filter:blur(4px);bac
   <form id="f" class="f" autocomplete="off">
     <div class="fhd"><h2 id="fh">새 거래</h2><button type="button" class="x" id="fx" aria-label="닫기">✕</button></div>
     <div class="pv"><span class="lab">예상 손익</span><b class="mono" id="pv">—</b></div>
+    <p class="pv2 mono" id="pv2"></p>
     <fieldset class="fs" id="fs">
       <div class="g2">
         <div class="fl"><span>방향</span>
@@ -342,7 +351,16 @@ dialog::backdrop{background:rgb(4 6 8/.62);-webkit-backdrop-filter:blur(4px);bac
       <div class="g3">
         <label class="fl"><span>진입가</span><input id="f-en" name="en" type="number" step="any" min="0" required inputmode="decimal"></label>
         <label class="fl"><span>청산가</span><input id="f-ex" name="ex" type="number" step="any" min="0" required inputmode="decimal"></label>
-        <label class="fl"><span>수량</span><input id="f-qty" name="qty" type="number" step="any" min="0" required inputmode="decimal"></label>
+        <label class="fl"><span id="qlab">수량</span><input id="f-qty" name="qty" type="number" step="any" min="0" required inputmode="decimal"></label>
+      </div>
+      <div class="g2">
+        <div class="fl"><span>수량 단위</span>
+          <div class="seg sdir" role="radiogroup" aria-label="수량 단위" style="width:max-content">
+            <label><input type="radio" name="unit" value="q" checked><span>수량</span></label>
+            <label><input type="radio" name="unit" value="l"><span>랏</span></label>
+          </div>
+        </div>
+        <label class="fl" id="csrow" hidden><span>1랏 = 몇 단위 <em>외환 100,000 · 금 100</em></span><input id="f-cs" name="cs" type="number" step="any" min="0" inputmode="decimal"></label>
       </div>
       <div class="g2">
         <label class="fl"><span>손절가 <em>선택 · R 계산용</em></span><input id="f-stop" name="stop" type="number" step="any" min="0" inputmode="decimal"></label>
@@ -399,18 +417,22 @@ const MISTAKES = ['추격매수', '손절 미준수', '과매매', '복수매매
 const CURS = ['₩', '$', 'USDT'], DOW = '월화수목금토일';
 const DEMO = [{"id":"demo-01","sym":"삼성전자","side":"L","at":"2026-07-02T09:41","en":69700,"ex":72000,"qty":299,"stop":68400,"fee":45106,"setup":"돌파매매","tags":[],"demo":true,"note":"전일 고점 돌파 + 거래량 2배. 1차 목표가에서 청산."},{"id":"demo-02","sym":"에코프로","side":"L","at":"2026-07-03T10:12","en":102800,"ex":105000,"qty":162,"stop":100400,"fee":35668,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-03","sym":"SK하이닉스","side":"L","at":"2026-07-06T09:25","en":204500,"ex":200500,"qty":124,"stop":200500,"fee":52285,"setup":"돌파매매","tags":[],"demo":true,"note":"돌파 실패 후 복귀. 손절 규칙대로 정리."},{"id":"demo-04","sym":"한화에어로스페이스","side":"L","at":"2026-07-08T13:40","en":662000,"ex":693000,"qty":33,"stop":649000,"fee":47871,"setup":"눌림목","tags":[],"demo":true,"note":"20일선 눌림 확인 후 진입. 분할 매도 성공."},{"id":"demo-05","sym":"NAVER","side":"L","at":"2026-07-10T10:05","en":202000,"ex":206500,"qty":126,"stop":198400,"fee":54555,"setup":"추세 추종","tags":[],"demo":true},{"id":"demo-06","sym":"카카오","side":"L","at":"2026-07-13T09:33","en":45600,"ex":44850,"qty":525,"stop":44850,"fee":49506,"setup":"갭 상승","tags":["추격매수"],"demo":true,"note":"갭 상승 후 추격. 진입 근거가 약했음."},{"id":"demo-07","sym":"현대차","side":"L","at":"2026-07-15T14:10","en":249500,"ex":260500,"qty":69,"stop":242500,"fee":37633,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-08","sym":"알테오젠","side":"L","at":"2026-07-17T09:50","en":335000,"ex":342500,"qty":46,"stop":324500,"fee":33034,"setup":"돌파매매","tags":["조기 청산"],"demo":true,"note":"목표가 전에 불안해서 먼저 팔았다. 계획대로였다면 +2R."},{"id":"demo-09","sym":"두산에너빌리티","side":"L","at":"2026-07-21T11:20","en":21900,"ex":21500,"qty":1259,"stop":21500,"fee":56919,"setup":"역추세 반등","tags":[],"demo":true},{"id":"demo-10","sym":"SK하이닉스","side":"L","at":"2026-07-23T10:30","en":189500,"ex":207000,"qty":84,"stop":183500,"fee":36294,"setup":"돌파매매","tags":[],"demo":true,"note":"시가 갭 이후 첫 조정에서 진입. 목표가까지 홀딩 성공."},{"id":"demo-11","sym":"삼성전자","side":"L","at":"2026-07-28T13:05","en":69900,"ex":71800,"qty":226,"stop":68200,"fee":34012,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-12","sym":"셀트리온","side":"L","at":"2026-07-30T09:45","en":193100,"ex":189200,"qty":90,"stop":188800,"fee":35811,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-13","sym":"에코프로","side":"L","at":"2026-08-03T09:38","en":94200,"ex":97700,"qty":190,"stop":91700,"fee":38883,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-14","sym":"한화에어로스페이스","side":"L","at":"2026-08-05T10:15","en":616000,"ex":652000,"qty":26,"stop":599000,"fee":35459,"setup":"추세 추종","tags":[],"demo":true},{"id":"demo-15","sym":"카카오","side":"L","at":"2026-08-06T09:28","en":47250,"ex":46050,"qty":341,"stop":46050,"fee":33038,"setup":"갭 상승","tags":["추격매수"],"demo":true,"note":"장 초반 급등에 올라탐. 눌림을 기다렸어야."},{"id":"demo-16","sym":"NAVER","side":"L","at":"2026-08-07T11:02","en":198700,"ex":194700,"qty":117,"stop":194700,"fee":47908,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-17","sym":"현대차","side":"L","at":"2026-08-11T09:35","en":245500,"ex":228500,"qty":65,"stop":238000,"fee":31356,"setup":"갭 상승","tags":["손절 미준수"],"demo":true,"note":"손절가를 이탈했는데 곧 반등할 거라며 버팀. 이달 가장 큰 손실."},{"id":"demo-18","sym":"삼성전자","side":"L","at":"2026-08-11T14:20","en":71100,"ex":69500,"qty":309,"stop":69500,"fee":45173,"setup":"눌림목","tags":["복수매매"],"demo":true,"note":"직전 손실을 만회하려고 비중을 키웠다."},{"id":"demo-19","sym":"알테오젠","side":"L","at":"2026-08-12T10:44","en":341500,"ex":331500,"qty":51,"stop":331500,"fee":35580,"setup":"역추세 반등","tags":["복수매매","과매매"],"demo":true},{"id":"demo-20","sym":"SK하이닉스","side":"L","at":"2026-08-13T09:52","en":197200,"ex":188000,"qty":78,"stop":192100,"fee":30902,"setup":"갭 상승","tags":["과매매","추격매수"],"demo":true},{"id":"demo-21","sym":"삼성전자","side":"L","at":"2026-08-14T13:22","en":67900,"ex":68600,"qty":456,"stop":66800,"fee":65643,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-22","sym":"두산에너빌리티","side":"L","at":"2026-08-18T09:30","en":20450,"ex":20000,"qty":1129,"stop":20000,"fee":47494,"setup":"역추세 반등","tags":["계획 없는 진입"],"demo":true,"note":"차트 보다가 충동적으로 진입. 적을 근거가 없었다."},{"id":"demo-23","sym":"에코프로","side":"L","at":"2026-08-19T10:18","en":93800,"ex":86500,"qty":141,"stop":91000,"fee":25767,"setup":"갭 상승","tags":["손절 미준수","비중 과다"],"demo":true},{"id":"demo-24","sym":"셀트리온","side":"L","at":"2026-08-20T11:35","en":183500,"ex":188800,"qty":95,"stop":179400,"fee":37590,"setup":"눌림목","tags":[],"demo":true,"note":"며칠 쉬고 원칙대로 복귀. 눌림 확인 후 진입."},{"id":"demo-25","sym":"NAVER","side":"L","at":"2026-08-21T09:58","en":195900,"ex":189800,"qty":85,"stop":189800,"fee":33957,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-26","sym":"현대차","side":"L","at":"2026-08-25T14:00","en":249500,"ex":254500,"qty":76,"stop":243000,"fee":40561,"setup":"추세 추종","tags":[],"demo":true},{"id":"demo-27","sym":"삼성전자","side":"L","at":"2026-08-26T10:40","en":69000,"ex":67400,"qty":244,"stop":67200,"fee":34594,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-28","sym":"한화에어로스페이스","side":"L","at":"2026-08-27T09:47","en":630000,"ex":664000,"qty":22,"stop":612000,"fee":30565,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-29","sym":"알테오젠","side":"L","at":"2026-08-31T13:15","en":341500,"ex":348000,"qty":66,"stop":335000,"fee":48168,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-30","sym":"SK하이닉스","side":"L","at":"2026-09-01T09:36","en":207000,"ex":221500,"qty":66,"stop":200500,"fee":30556,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-31","sym":"삼성전자","side":"L","at":"2026-09-02T10:08","en":73900,"ex":76800,"qty":205,"stop":72000,"fee":32973,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-32","sym":"카카오","side":"L","at":"2026-09-03T11:12","en":48650,"ex":47350,"qty":364,"stop":47350,"fee":36265,"setup":"역추세 반등","tags":[],"demo":true},{"id":"demo-33","sym":"에코프로","side":"L","at":"2026-09-04T09:44","en":104900,"ex":106800,"qty":236,"stop":103200,"fee":52863,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-34","sym":"한화에어로스페이스","side":"L","at":"2026-09-07T09:29","en":708000,"ex":755000,"qty":33,"stop":693000,"fee":52089,"setup":"돌파매매","tags":[],"demo":true,"note":"계획한 R을 끝까지 먹은 거래. 이런 매매를 반복해야 한다."},{"id":"demo-35","sym":"삼성전자","side":"L","at":"2026-09-07T13:10","en":69800,"ex":71900,"qty":166,"stop":67500,"fee":25012,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-36","sym":"NAVER","side":"L","at":"2026-09-08T10:26","en":222000,"ex":225000,"qty":95,"stop":218000,"fee":44845,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-37","sym":"두산에너빌리티","side":"L","at":"2026-09-09T13:48","en":23050,"ex":22300,"qty":688,"stop":22300,"fee":32296,"setup":"갭 상승","tags":["추격매수"],"demo":true},{"id":"demo-38","sym":"현대차","side":"L","at":"2026-09-10T09:55","en":240500,"ex":250000,"qty":100,"stop":235500,"fee":52358,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-39","sym":"셀트리온","side":"L","at":"2026-09-11T10:33","en":189900,"ex":197300,"qty":72,"stop":184600,"fee":29752,"setup":"추세 추종","tags":[],"demo":true},{"id":"demo-40","sym":"알테오젠","side":"L","at":"2026-09-14T11:00","en":345000,"ex":338000,"qty":60,"stop":337000,"fee":42651,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-41","sym":"SK하이닉스","side":"L","at":"2026-09-15T09:40","en":202500,"ex":217000,"qty":76,"stop":197000,"fee":34468,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-42","sym":"카카오","side":"L","at":"2026-09-16T14:20","en":46500,"ex":45650,"qty":490,"stop":45650,"fee":47036,"setup":"역추세 반등","tags":[],"demo":true},{"id":"demo-43","sym":"삼성전자","side":"L","at":"2026-09-17T09:37","en":76400,"ex":74900,"qty":268,"stop":74900,"fee":42214,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-44","sym":"에코프로","side":"L","at":"2026-09-18T10:50","en":96800,"ex":99100,"qty":202,"stop":94300,"fee":41969,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-45","sym":"한화에어로스페이스","side":"L","at":"2026-09-21T09:49","en":705000,"ex":693000,"qty":37,"stop":693000,"fee":53913,"setup":"갭 상승","tags":["추격매수"],"demo":true},{"id":"demo-46","sym":"NAVER","side":"L","at":"2026-09-22T10:22","en":225500,"ex":238500,"qty":72,"stop":219000,"fee":35921,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-47","sym":"현대차","side":"L","at":"2026-09-23T13:35","en":258500,"ex":262500,"qty":77,"stop":253500,"fee":42400,"setup":"추세 추종","tags":[],"demo":true},{"id":"demo-48","sym":"SK하이닉스","side":"L","at":"2026-09-28T09:42","en":206000,"ex":215000,"qty":59,"stop":199100,"fee":26559,"setup":"돌파매매","tags":[],"demo":true},{"id":"demo-49","sym":"삼성전자","side":"L","at":"2026-09-29T10:10","en":74300,"ex":75800,"qty":302,"stop":72900,"fee":48004,"setup":"눌림목","tags":[],"demo":true},{"id":"demo-50","sym":"셀트리온","side":"L","at":"2026-09-30T14:05","en":185400,"ex":190200,"qty":153,"stop":182200,"fee":61001,"setup":"눌림목","tags":[],"demo":true}]; // example trades; the build script fills this only for the installable app
 
-const S = { period: 'all', q: '', res: 'all', day: '', view: 'setup', ym: ymd(new Date()).slice(0, 7) };
+const S = { period: 'all', q: '', res: 'all', day: '', view: 'setup', cu: 'pnl', ym: ymd(new Date()).slice(0, 7) };
 let cur = pref('cur'), cc = pref('cc') === 'us' ? 'us' : 'kr';
-let trades = [], tombs = {}, ready = false, canWrite = true, store = null, dl = null, ip = null, cfg = null, editing = null, shownTotal = 0, raf = 0, lastSer = [], F, onChange = () => {}, onReady = () => {};
+let trades = [], tombs = {}, cap = { v: 0, t: 0 }, ready = false, canWrite = true, store = null, dl = null, ip = null, cfg = null, editing = null, shownTotal = 0, raf = 0, lastSer = [], lastBase = 0, F, onChange = () => {}, onReady = () => {};
 if (!CURS.includes(cur)) cur = '₩';
+try { const c = JSON.parse(localStorage.getItem('tj.cap') || 'null'); if (c && c.v >= 0) cap = { v: +c.v, t: +c.t || 0 }; } catch {}
 
 const setCur = c => {
   cur = c; pref('cur', c);
   const l = c === '₩' ? 'ko-KR' : 'en-US', d = c === '₩' ? 0 : 2, nf = o => new Intl.NumberFormat(l, o);
-  F = { s: nf({ maximumFractionDigits: d, signDisplay: 'exceptZero' }), c: nf({ notation: 'compact', maximumSignificantDigits: 3, signDisplay: 'exceptZero' }), p: nf({ maximumFractionDigits: 8 }) };
+  F = { n: nf({ maximumFractionDigits: d }), s: nf({ maximumFractionDigits: d, signDisplay: 'exceptZero' }), c: nf({ notation: 'compact', maximumSignificantDigits: 3, signDisplay: 'exceptZero' }), u: nf({ notation: 'compact', maximumSignificantDigits: 3 }), p: nf({ maximumFractionDigits: 8 }) };
 };
 const setCC = v => { cc = v; pref('cc', v); document.documentElement.dataset.pnl = v; };
 setCur(cur); setCC(cc);
+const pct = r => r === 0 ? '0%' : (r > 0 ? '+' : '') + (r * 100).toFixed(Math.abs(r) < .1 ? 2 : 1) + '%';
+const saveCap = () => { try { localStorage.setItem('tj.cap', JSON.stringify(cap)); } catch {} };
+function setCap(v) { if (v === cap.v) return; cap = { v, t: Date.now() }; saveCap(); onChange(); render(); } // ponytail: one starting number, no deposits/withdrawals; add a cash-flow list if returns must be exact
 
 /* ---- money math ---- */
 const calc = t => {
@@ -423,7 +445,7 @@ function daily(rows) {
   let cum = 0, pk = 0;
   return [...m.values()].map(e => { cum += e.pnl; pk = Math.max(pk, cum); return { ...e, cum, pk }; });
 }
-function stats(rows) {
+function stats(rows, base = 0) { // base = balance at the start of the rows (0 when no starting capital is set)
   const s = { n: rows.length, w: 0, l: 0, gp: 0, gl: 0, tot: 0, rs: [], bw: 0, bl: 0, cw: 0, cl: 0 };
   for (const t of rows) {
     s.tot += t.pnl;
@@ -435,6 +457,7 @@ function stats(rows) {
   const ser = daily(rows), last = ser.at(-1);
   s.mdd = Math.max(0, ...ser.map(d => d.pk - d.cum));
   s.dd = last ? last.pk - last.cum : 0;
+  s.mddPct = base > 0 ? Math.max(0, ...ser.map(d => (d.pk - d.cum) / (base + d.pk))) : null;
   s.avgR = s.rs.length ? s.rs.reduce((a, b) => a + b) / s.rs.length : null;
   s.ser = ser;
   return s;
@@ -444,14 +467,18 @@ function stats(rows) {
   const st = stats([100, -50, -30, 20].map((pnl, i) => ({ pnl, r: null, day: '2026-01-0' + (i + 1) })));
   console.assert(a.pnl === 95 && Math.abs(a.r - 1.9) < 1e-9 && b.pnl === -100 && b.r === null, 'journal: calc');
   console.assert(st.mdd === 80 && st.dd === 60 && st.bl === 2, 'journal: stats');
+  console.assert(Math.abs(stats([100, -50, -30, 20].map((pnl, i) => ({ pnl, r: null, day: '2026-01-0' + (i + 1) })), 1000).mddPct - 80 / 1100) < 1e-9, 'journal: drawdown %');
 }
 
-const persist = () => { try { localStorage.setItem('tj.trades', JSON.stringify(trades)); localStorage.setItem('tj.tombs', JSON.stringify(tombs)); } catch {} };
-const all = () => trades.filter(t => typeof t.at === 'string' && t.at.length >= 16 && [t.en, t.ex, t.qty].every(Number.isFinite)).map(calc).sort((a, b) => a.at < b.at ? -1 : a.at > b.at ? 1 : 0);
+const persist = () => { try { localStorage.setItem('tj.trades', JSON.stringify(trades)); localStorage.setItem('tj.tombs', JSON.stringify(tombs)); } catch {} saveCap(); };
+const all = () => { // chronological; every row also knows the balance before it (bal0)
+  let run = cap.v;
+  return trades.filter(t => typeof t.at === 'string' && t.at.length >= 16 && [t.en, t.ex, t.qty].every(Number.isFinite)).map(calc).sort((a, b) => a.at < b.at ? -1 : a.at > b.at ? 1 : 0).map(t => { t.bal0 = run; run += t.pnl; return t; });
+};
 function view() {
   const rows = all(), now = new Date();
   const cut = S.period === 'all' ? '' : S.period === 'ytd' ? now.getFullYear() + '-01-01' : ymd(new Date(now - S.period * 864e5));
-  return { rows, per: rows.filter(t => t.day >= cut) };
+  return { rows, per: rows.filter(t => t.day >= cut), base: cap.v + rows.reduce((a, t) => t.day < cut ? a + t.pnl : a, 0) };
 }
 
 /* ---- LED board: 5x7 dot matrix, one stroked dot per cell ---- */
@@ -490,13 +517,15 @@ function nice(lo, hi, n) {
   for (let i = Math.ceil(lo / step - 1e-9); i * step <= hi + step * 1e-9; i++) out.push(i * step);
   return out;
 }
-function chart(ser) {
-  lastSer = ser;
+function chart(ser, base = 0) {
+  lastSer = ser; lastBase = base;
   const box = $('#chart'), W = Math.floor(box.clientWidth), H = 290;
   if (!W) return;
   if (!ser.length) { box.innerHTML = '<div class="empty">거래를 기록하면 자산 곡선이 그려져요.</div>'; return; }
   const D = 864e5, ms = d => Date.parse(d), m = { l: 8, r: 62, t: 14, b: 26 };
-  const pts = [{ day: new Date(ms(ser[0].day) - D).toISOString().slice(0, 10), cum: 0, pk: 0, pnl: 0, n: 0 }, ...ser];
+  const pctOn = S.cu === 'pct' && base > 0, k = pctOn ? 100 / base : 1; // plot as % of the balance at the start of the period when asked
+  const fm = v => v === 0 ? '0' : pctOn ? (v > 0 ? '+' : '') + v.toFixed(Math.abs(v) < 10 ? 1 : 0) + '%' : F.c.format(v);
+  const pts = [{ day: new Date(ms(ser[0].day) - D).toISOString().slice(0, 10), cum: 0, pk: 0, pnl: 0, n: 0, v: 0 }, ...ser.map(p => ({ ...p, v: p.cum, cum: p.cum * k, pk: p.pk * k }))];
   const t0 = ms(pts[0].day), t1 = Math.max(ms(pts.at(-1).day), t0 + 6 * D);
   let lo = Math.min(0, ...pts.map(p => p.cum)), hi = Math.max(0, ...pts.map(p => p.pk));
   if (hi === lo) hi = lo + 1;
@@ -508,9 +537,9 @@ function chart(ser) {
   const grad = (id, a) => `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${Y(hi)}" x2="0" y2="${Y(lo)}"><stop offset="0" style="stop-color:var(--up);stop-opacity:${a ? .3 : 1}"/><stop offset="${z}%" style="stop-color:var(--up);stop-opacity:${a ? 0 : 1}"/><stop offset="${z}%" style="stop-color:var(--dn);stop-opacity:${a ? 0 : 1}"/><stop offset="1" style="stop-color:var(--dn);stop-opacity:${a ? .3 : 1}"/></linearGradient>`;
   const span = (t1 - t0) / D, lab = t => { const d = new Date(t); return span > 240 ? `${String(d.getUTCFullYear()).slice(2)}.${d.getUTCMonth() + 1}` : `${d.getUTCMonth() + 1}/${d.getUTCDate()}`; };
   const xs = [0, 1, 2, 3].map(i => `<text class="ax" x="${f1(m.l + (W - m.l - m.r) * i / 3)}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === 3 ? 'end' : 'middle'}">${lab(t0 + (t1 - t0) * i / 3)}</text>`).join('');
-  const ys = nice(lo, hi, 4).map(v => `<line class="gl${v === 0 ? ' z' : ''}" x1="${m.l}" x2="${W - m.r}" y1="${f1(Y(v))}" y2="${f1(Y(v))}"/><text class="ax" x="${W - m.r + 8}" y="${f1(Y(v) + 3.5)}">${F.c.format(v)}</text>`).join('');
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="누적 손익 곡선"><defs>${grad('gs', 0)}${grad('gf', 1)}</defs>${ys}${xs}<path class="dd" d="${dd}"/><path d="${area}" fill="url(#gf)"/><path class="eq" d="${line}" stroke="url(#gs)"/><circle cx="${f1(X(end.day))}" cy="${f1(Y(end.cum))}" r="9" fill="var(--lit)" opacity=".16"/><circle cx="${f1(X(end.day))}" cy="${f1(Y(end.cum))}" r="3.6" fill="var(--lit)"/><line id="cx" class="hv" y1="${m.t}" y2="${H - m.b}" opacity="0"/><circle id="cd" r="4.5" fill="var(--bg)" stroke="var(--fg)" stroke-width="2" opacity="0"/></svg><div class="tip" id="tip" hidden></div>`;
-  const tip = $('#tip'), cx = $('#cx'), cd = $('#cd');
+  const ys = nice(lo, hi, 4).map(v => `<line class="gl${v === 0 ? ' z' : ''}" x1="${m.l}" x2="${W - m.r}" y1="${f1(Y(v))}" y2="${f1(Y(v))}"/><text class="ax" x="${W - m.r + 8}" y="${f1(Y(v) + 3.5)}">${fm(v)}</text>`).join('');
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${pctOn ? '수익률' : '누적 손익'} 곡선"><defs>${grad('gs', 0)}${grad('gf', 1)}</defs>${ys}${xs}<path class="dd" d="${dd}"/><path d="${area}" fill="url(#gf)"/><path class="eq" d="${line}" stroke="url(#gs)"/><circle cx="${f1(X(end.day))}" cy="${f1(Y(end.cum))}" r="9" fill="var(--lit)" opacity=".16"/><circle cx="${f1(X(end.day))}" cy="${f1(Y(end.cum))}" r="3.6" fill="var(--lit)"/><line id="chx" class="hv" y1="${m.t}" y2="${H - m.b}" opacity="0"/><circle id="chd" r="4.5" fill="var(--bg)" stroke="var(--fg)" stroke-width="2" opacity="0"/></svg><div class="tip" id="tip" hidden></div>`;
+  const tip = $('#tip'), cx = $('#chx'), cd = $('#chd');
   box.onpointermove = e => {
     const x = e.clientX - box.getBoundingClientRect().left;
     let b = pts[0];
@@ -519,26 +548,30 @@ function chart(ser) {
     cx.setAttribute('x1', px); cx.setAttribute('x2', px); cd.setAttribute('cx', px); cd.setAttribute('cy', Y(b.cum));
     cx.setAttribute('opacity', 1); cd.setAttribute('opacity', 1);
     tip.hidden = false;
-    tip.innerHTML = `<b>${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일</b><br>누적 <span class="pn ${cls(b.cum)}">${F.s.format(b.cum)}</span>${b.n ? `<br>당일 <span class="pn ${cls(b.pnl)}">${F.s.format(b.pnl)}</span> · ${b.n}건` : ''}`;
+    tip.innerHTML = `<b>${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일</b><br>누적 <span class="pn ${cls(b.v)}">${F.s.format(b.v)}</span>${base > 0 ? ' · ' + pct(b.v / base) : ''}${b.n ? `<br>당일 <span class="pn ${cls(b.pnl)}">${F.s.format(b.pnl)}</span> · ${b.n}건` : ''}`;
     tip.style.left = (px + 14 + tip.offsetWidth > W ? px - 14 - tip.offsetWidth : px + 14) + 'px';
   };
   box.onpointerleave = () => { tip.hidden = true; cx.setAttribute('opacity', 0); cd.setAttribute('opacity', 0); };
 }
-new ResizeObserver(() => chart(lastSer)).observe($('#chart'));
+new ResizeObserver(() => chart(lastSer, lastBase)).observe($('#chart'));
 
 /* ---- render ---- */
-function renderBoard(per, st) {
+function renderBoard(per, st, base, bal) {
   $('#board').className = 'board ' + cls(st.tot);
   ledTo(st.tot);
   $('#per').textContent = PERIODS.find(p => p[0] === S.period)[2] + ' · ' + cur;
   $('#sub').textContent = st.n ? `${st.n}거래 · ${st.w}승 ${st.l}패 · 승률 ${(st.w / st.n * 100).toFixed(0)}%` : '아직 기록이 없어요';
+  $('#bal').innerHTML = cap.v > 0
+    ? `잔고 <b>${F.n.format(bal)}</b> · 수익률 <b class="pn ${cls(st.tot)}">${base > 0 ? pct(st.tot / base) : '—'}</b>`
+    : '<button type="button" class="lnk" id="capgo">시작 자금을 넣으면 잔고와 수익률이 보여요</button>';
   const best = per.reduce((a, t) => !a || t.pnl > a.pnl ? t : a, null), worst = per.reduce((a, t) => !a || t.pnl < a.pnl ? t : a, null);
   const ex = (l, t) => `<div><span class="lab">${l}</span><b class="${t ? 'pn ' + cls(t.pnl) : ''}">${t ? F.s.format(t.pnl) : '—'}</b><span class="sub">${t ? esc(t.sym) + ' · ' + t.day.slice(5).replace('-', '.') : '&nbsp;'}</span></div>`;
   $('#xr').innerHTML = ex('최고 거래', best) + ex('최악 거래', worst);
   const last = per.slice(-20), mx = Math.max(1, ...last.map(t => Math.abs(t.pnl)));
   $('#strip').innerHTML = last.map(t => `<span class="bar" title="${esc(t.sym)} ${F.s.format(t.pnl)}"><i class="${cls(t.pnl)}" style="--h:${Math.max(10, Math.abs(t.pnl) / mx * 50).toFixed(0)}%"></i></span>`).join('');
   $('#streak').textContent = st.cw ? `${st.cw}연승 중` : st.cl ? `${st.cl}연패 중` : '';
-  chart(st.ser);
+  $('#cseg').hidden = !(cap.v > 0);
+  chart(st.ser, base);
 }
 function renderKpis(st) {
   const k = (l, v, s, c = '') => `<div class="k"><span class="kl">${l}</span><b class="kv pn ${c}">${v}</b><span class="ks">${s}</span></div>`, none = '—';
@@ -548,7 +581,7 @@ function renderKpis(st) {
     k('손익비', al && aw ? (aw / al).toFixed(2) : none, `평균 ${F.c.format(aw)} / ${F.c.format(-al)}`) +
     k('프로핏 팩터', st.gl ? (st.gp / st.gl).toFixed(2) : st.gp ? '∞' : none, `${F.c.format(st.gp)} / ${F.c.format(-st.gl)}`) +
     k('기대값 / 거래', n ? F.s.format(st.tot / n) : none, st.avgR != null ? `평균 ${st.avgR > 0 ? '+' : ''}${st.avgR.toFixed(2)}R` : '손절가를 넣으면 R이 계산돼요', cls(st.tot)) +
-    k('최대 낙폭', n ? F.s.format(-st.mdd) : none, n ? (st.dd ? `지금 ${F.c.format(-st.dd)}` : '고점 갱신 중') : '', st.mdd ? 'cd' : '') +
+    k('최대 낙폭', n ? F.s.format(-st.mdd) : none, n ? [st.mddPct > 0 ? '-' + (st.mddPct * 100).toFixed(1) + '%' : '', st.dd ? `지금 ${F.c.format(-st.dd)}` : '고점 갱신 중'].filter(Boolean).join(' · ') : '', st.mdd ? 'cd' : '') +
     k('최대 연승 · 연패', n ? `${st.bw} · ${st.bl}` : none, '연속 이익 · 연속 손실');
 }
 function renderCal(rows) {
@@ -582,8 +615,9 @@ const row = t => `<tr tabindex="0" data-id="${esc(t.id)}">
 <td><b>${esc(t.sym)}</b>${t.note ? `<span class="note">${esc(t.note)}</span>` : ''}</td>
 <td class="side">${t.side === 'S' ? '▼ 숏' : '▲ 롱'}</td>
 <td class="mono r nw">${F.p.format(t.en)} → ${F.p.format(t.ex)}</td>
-<td class="mono r">${F.p.format(t.qty)}</td>
-<td class="mono r pn ${cls(t.pnl)}"><b>${F.s.format(t.pnl)}</b></td>
+<td class="mono r">${t.lots ? `${F.p.format(t.lots)}랏<br><span class="dim">${F.p.format(t.qty)}단위</span>` : F.p.format(t.qty)}</td>
+<td class="mono r nw">${F.u.format(t.en * t.qty)}${cap.v > 0 && t.bal0 > 0 ? `<br><span class="dim">${(t.en * t.qty / t.bal0 * 100).toFixed(1)}%</span>` : ''}</td>
+<td class="mono r pn ${cls(t.pnl)}"><b>${F.s.format(t.pnl)}</b>${cap.v > 0 && t.bal0 > 0 ? `<br><span class="dim">${pct(t.pnl / t.bal0)}</span>` : ''}</td>
 <td class="mono r pn ${cls(t.pnl)}">${t.r == null ? '<span class="dim">—</span>' : (t.r > 0 ? '+' : '') + t.r.toFixed(1) + 'R'}</td>
 <td>${t.setup ? `<span class="chip">${esc(t.setup)}</span>` : '<span class="dim">—</span>'}</td>
 <td>${t.tags.map(g => `<span class="chip">${esc(g)}</span>`).join(' ')}</td></tr>`;
@@ -592,11 +626,12 @@ function renderLog(rows, per) {
   const out = (S.day ? rows : per).filter(t => (!S.day || t.day === S.day) && (S.res === 'all' || (S.res === 'w' ? t.pnl > 0 : t.pnl < 0)) && (!q || [t.sym, t.setup, t.note, ...t.tags].join(' ').toLowerCase().includes(q))).reverse();
   $('#dayc').innerHTML = S.day ? `<button type="button" class="chip" id="dayx">${+S.day.slice(5, 7)}월 ${+S.day.slice(8)}일 ✕</button>` : '';
   $('#thp').textContent = '손익 ' + cur;
-  $('#tb').innerHTML = out.length ? out.map(row).join('') : `<tr><td colspan="9" class="empty">${!ready ? '불러오는 중…' : !rows.length ? '아직 기록이 없어요. “+ 거래 기록”으로 첫 매매를 남겨보세요.' : '조건에 맞는 거래가 없어요.'}</td></tr>`;
+  $('#tb').innerHTML = out.length ? out.map(row).join('') : `<tr><td colspan="10" class="empty">${!ready ? '불러오는 중…' : !rows.length ? '아직 기록이 없어요. “+ 거래 기록”으로 첫 매매를 남겨보세요.' : '조건에 맞는 거래가 없어요.'}</td></tr>`;
 }
 const pressed = (attr, val) => document.querySelectorAll(`[data-${attr}]`).forEach(b => b.setAttribute('aria-pressed', b.dataset[attr] === val));
 function renderChrome() {
-  pressed('p', S.period); pressed('v', S.view); pressed('res', S.res); pressed('cur', cur); pressed('cc', cc);
+  pressed('p', S.period); pressed('v', S.view); pressed('res', S.res); pressed('cur', cur); pressed('cc', cc); pressed('cu', S.cu);
+  if (document.activeElement !== $('#cap')) $('#cap').value = cap.v ? F.n.format(cap.v) : '';
   const demo = trades.some(t => t.demo), offer = ready && !trades.length && DEMO.length > 0 && !cfg, b = $('#clr');
   $('#demo').hidden = !canWrite || !(demo || offer); $('#new').hidden = !canWrite;
   $('#demot').textContent = demo ? '지금 보이는 건 예시 데이터예요. 실제 매매를 기록하기 전에 지워주세요.' : '아직 기록이 없어요. 예시 데이터로 먼저 둘러볼 수 있어요.';
@@ -607,8 +642,8 @@ function renderChrome() {
   $('#foot').innerHTML = `<span>${!store ? '' : store.mode === 'db' ? '기록은 이 페이지의 데이터베이스에 저장돼요' : window.claude ? '이 브라우저에만 저장 중이에요 (데이터베이스 연결 없음)' : cfg ? '기록이 내 GitHub 비공개 저장소와 동기화돼요' : '기록은 이 기기에만 저장돼요 · 설정에서 백업·동기화할 수 있어요'}</span><span>N 키로 새 거래</span>`;
 }
 function render() {
-  const { rows, per } = view(), st = stats(per);
-  renderBoard(per, st); renderKpis(st); renderCal(rows); renderLeaks(per); renderLog(rows, per); renderChrome();
+  const { rows, per, base } = view(), st = stats(per, base), bal = cap.v + rows.reduce((a, t) => a + t.pnl, 0);
+  renderBoard(per, st, base, bal); renderKpis(st); renderCal(rows); renderLeaks(per); renderLog(rows, per); renderChrome();
 }
 
 /* ---- trade form ---- */
@@ -619,36 +654,64 @@ function arm(btn, fn) { // two-step confirm: confirm() is unavailable in the vie
   btn._t = setTimeout(() => { btn.textContent = btn.dataset.arm; delete btn.dataset.arm; }, 3000);
 }
 function read() {
-  const n = k => f[k].value === '' ? undefined : +f[k].value;
-  return { sym: f.sym.value.trim(), side: f.side.value, at: f.at.value, en: n('en'), ex: n('ex'), qty: n('qty'), stop: n('stop'), fee: n('fee') ?? 0, setup: f.setup.value.trim() || undefined, tags: [...f.querySelectorAll('[name=tag]:checked')].map(c => c.value), note: f.note.value.trim() || undefined };
+  const n = k => f[k].value === '' ? undefined : +f[k].value, lot = f.unit.value === 'l', q = n('qty'), cs = n('cs');
+  return { sym: f.sym.value.trim(), side: f.side.value, at: f.at.value, en: n('en'), ex: n('ex'), qty: lot ? (q > 0 && cs > 0 ? +(q * cs).toFixed(8) : undefined) : q, lots: lot ? q : undefined, cs: lot ? cs : undefined, stop: n('stop'), fee: n('fee') ?? 0, setup: f.setup.value.trim() || undefined, tags: [...f.querySelectorAll('[name=tag]:checked')].map(c => c.value), note: f.note.value.trim() || undefined };
 }
+const balBefore = at => cap.v + all().reduce((a, t) => t.id !== editing && t.at < (at || '9') ? a + t.pnl : a, 0); // balance just before a trade closing at `at`
 function preview() {
-  const v = read(), el = $('#pv');
-  if (!(v.en > 0 && v.ex >= 0 && v.qty > 0)) { el.className = 'mono'; el.textContent = '—'; return; }
+  const v = read(), el = $('#pv'), el2 = $('#pv2');
+  if (!(v.en > 0 && v.ex >= 0 && v.qty > 0)) { el.className = 'mono'; el.textContent = '—'; el2.textContent = ''; return; }
   const c = calc({ ...v, at: '2000-01-01T00:00' });
   el.className = 'mono ' + cls(c.pnl);
   el.innerHTML = `${F.s.format(c.pnl)}<small>${c.r != null ? (c.r > 0 ? '+' : '') + c.r.toFixed(2) + 'R' : cur}</small>`;
+  const bal = cap.v > 0 ? balBefore(v.at) : 0, notional = v.en * v.qty, risk = v.stop > 0 ? Math.abs(v.en - v.stop) * v.qty : 0;
+  el2.innerHTML = [
+    v.lots ? `${F.p.format(v.lots)}랏 = ${F.p.format(v.qty)}단위` : '',
+    `투입 ${F.n.format(notional)}${bal > 0 ? ` · 계좌의 ${(notional / bal * 100).toFixed(1)}%` : ''}`,
+    risk ? `손절 시 -${F.n.format(risk)}${bal > 0 ? ` · 계좌의 ${(risk / bal * 100).toFixed(2)}%` : ''}` : ''
+  ].filter(Boolean).join('<br>');
+}
+function unitUi() { // lots need a contract size: show its field, and reuse the last one used for this symbol
+  const lot = f.unit.value === 'l';
+  $('#csrow').hidden = !lot; $('#qlab').textContent = lot ? '랏' : '수량';
+  if (lot && f.cs.value === '') {
+    const done = all().filter(t => t.cs), same = done.filter(t => t.sym === f.sym.value.trim()), c0 = (same.at(-1) || done.at(-1))?.cs ?? pref('cs');
+    if (c0) f.cs.value = c0;
+  }
 }
 function openForm(t) {
   editing = t?.id || null;
   f.reset();
   const v = t || { side: 'L', at: local(new Date()).slice(0, 16) };
   f.side.value = v.side === 'S' ? 'S' : 'L'; f.sym.value = v.sym || ''; f.at.value = v.at || '';
-  for (const k of ['en', 'ex', 'qty', 'stop', 'fee']) f[k].value = v[k] ?? '';
+  const lot = t ? !!t.lots : pref('unit') === 'l';
+  f.unit.value = lot ? 'l' : 'q'; f.qty.value = (lot ? v.lots : v.qty) ?? ''; f.cs.value = v.cs ?? '';
+  for (const k of ['en', 'ex', 'stop', 'fee']) f[k].value = v[k] ?? '';
   f.setup.value = v.setup || ''; f.note.value = v.note || '';
   f.querySelectorAll('[name=tag]').forEach(c => { c.checked = Array.isArray(v.tags) && v.tags.includes(c.value); });
   $('#fh').textContent = t ? (canWrite ? '거래 수정' : '거래 보기') : '새 거래';
   $('#fs').disabled = !canWrite; $('#save').hidden = !canWrite; $('#del').hidden = !t || !canWrite; $('#err').textContent = '';
-  preview(); dlg.showModal();
+  unitUi(); preview(); dlg.showModal();
 }
-f.oninput = f.onchange = preview;
+f.oninput = f.onchange = e => {
+  if (e.type === 'change' && e.target.name === 'unit') { // switching unit: convert what is already typed
+    unitUi();
+    const c = +f.cs.value;
+    if (c > 0 && f.qty.value !== '') f.qty.value = +(f.unit.value === 'l' ? f.qty.value / c : f.qty.value * c).toFixed(8);
+  } else if (e.type === 'change' && e.target === f.sym && f.unit.value === 'l') {
+    const same = all().filter(t => t.cs && t.sym === f.sym.value.trim()).at(-1);
+    if (same) f.cs.value = same.cs;
+  }
+  preview();
+};
 f.onsubmit = async e => {
   e.preventDefault();
   const v = read(), orig = editing && trades.find(t => t.id === editing);
-  if (!(v.qty > 0 && v.en > 0 && v.ex >= 0)) { $('#err').textContent = '진입가·청산가·수량을 확인해 주세요.'; return; }
+  if (!(v.qty > 0 && v.en > 0 && v.ex >= 0)) { $('#err').textContent = f.unit.value === 'l' ? '진입가·청산가·랏·1랏 크기를 확인해 주세요.' : '진입가·청산가·수량을 확인해 주세요.'; return; }
   if (v.stop != null && !(v.stop > 0)) v.stop = undefined;
   try { await store.put({ ...v, ...(editing ? { id: editing } : {}), ...(orig?.demo ? { demo: true } : {}) }); }
   catch { $('#err').textContent = '저장하지 못했어요. 권한과 연결 상태를 확인해 주세요.'; return; }
+  pref('unit', f.unit.value); if (v.cs) pref('cs', v.cs);
   S.ym = v.at.slice(0, 7); S.day = '';
   dlg.close(); toast('저장했어요'); render();
 };
@@ -664,8 +727,8 @@ async function clearDemo() {
 async function exportCsv() {
   const q = v => { v = String(v ?? ''); return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
   const x = v => q(/^[=+\-@]/.test(v ?? '') ? "'" + v : v); // text cells: no spreadsheet formulas
-  const head = ['일시', '종목', '방향', '진입가', '청산가', '수량', '수수료', '손익', 'R', '전략', '실수', '메모'];
-  const rows = all().map(t => [t.at.replace('T', ' '), x(t.sym), t.side === 'S' ? '숏' : '롱', t.en, t.ex, t.qty, t.fee || 0, +t.pnl.toFixed(2), t.r == null ? '' : t.r.toFixed(2), x(t.setup), x(t.tags.join(' ')), x(t.note)]);
+  const head = ['일시', '종목', '방향', '진입가', '청산가', '수량', '랏', '1랏 크기', '투입금액', '수수료', '손익', 'R', '전략', '실수', '메모'];
+  const rows = all().map(t => [t.at.replace('T', ' '), x(t.sym), t.side === 'S' ? '숏' : '롱', t.en, t.ex, t.qty, t.lots ?? '', t.cs ?? '', +(t.en * t.qty).toFixed(2), t.fee || 0, +t.pnl.toFixed(2), t.r == null ? '' : t.r.toFixed(2), x(t.setup), x(t.tags.join(' ')), x(t.note)]);
   try { await saveFile('trading-journal.csv', String.fromCharCode(0xFEFF) + [head, ...rows].map(r => r.join(',')).join(String.fromCharCode(10)), 'text/csv;charset=utf-8'); toast('CSV를 내보냈어요'); }
   catch (e) { if (e?.code !== 'declined') toast('내보내지 못했어요'); }
 }
@@ -680,12 +743,12 @@ async function saveFile(name, data, type) {
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 async function backup() {
-  try { await saveFile('trading-journal-backup.json', JSON.stringify({ app: 'trading-journal', v: 1, trades }), 'application/json'); toast('백업 파일을 저장했어요'); }
+  try { await saveFile('trading-journal-backup.json', JSON.stringify({ app: 'trading-journal', v: 1, trades, cap }), 'application/json'); toast('백업 파일을 저장했어요'); }
   catch (e) { if (e?.code !== 'declined') toast('백업하지 못했어요'); }
 }
 async function restore(file) {
   if (!file) return;
-  const keep = ['sym', 'side', 'at', 'en', 'ex', 'qty', 'stop', 'fee', 'setup', 'tags', 'note', 'demo'], have = new Set(trades.map(t => t.id));
+  const keep = ['sym', 'side', 'at', 'en', 'ex', 'qty', 'lots', 'cs', 'stop', 'fee', 'setup', 'tags', 'note', 'demo'], have = new Set(trades.map(t => t.id));
   let n = 0;
   try {
     const d = JSON.parse(await file.text());
@@ -695,6 +758,7 @@ async function restore(file) {
       if (typeof t.id === 'string' && /^[0-9A-Za-z_.~:@+-]{1,100}$/.test(t.id)) doc.id = t.id;
       await store.put(doc); n++;
     }
+    if (d.cap && d.cap.v >= 0 && d.cap.t > cap.t) { cap = { v: +d.cap.v, t: +d.cap.t }; saveCap(); onChange(); } // a newer starting capital in the backup wins
     toast(n + '건을 가져왔어요');
   } catch { toast(n ? n + '건만 가져오고 멈췄어요' : '백업 파일을 읽지 못했어요'); }
   render();
@@ -714,6 +778,8 @@ const A = { // selector -> handler; returning false skips the re-render
   '[data-p]': e => { S.period = e.dataset.p; },
   '[data-v]': e => { S.view = e.dataset.v; },
   '[data-res]': e => { S.res = e.dataset.res; },
+  '[data-cu]': e => { S.cu = e.dataset.cu; },
+  '#capgo': () => { $('#menu').open = true; $('#cap').focus(); return false; },
   '[data-day]': e => { S.day = S.day === e.dataset.day ? '' : e.dataset.day; if (S.day) setTimeout(() => $('#h-log').scrollIntoView({ block: 'center', behavior: 'smooth' }), 60); },
   '#dayx': () => { S.day = ''; },
   '[data-m]': e => { S.ym = shiftMonth(S.ym, +e.dataset.m); },
@@ -747,17 +813,17 @@ const gh = (path, opt = {}) => fetch('https://api.github.com/repos/' + cfg.repo 
 const fail = r => Object.assign(new Error('http ' + r.status), { status: r.status });
 const why = e => e.status === 401 ? '토큰이 올바르지 않거나 만료됐어요' : e.status === 403 ? '권한이 없거나 요청이 너무 많아요' : e.status === 404 ? '저장소를 찾을 수 없어요. 이름과 토큰 권한을 확인해 주세요' : e.status ? 'GitHub 오류 (' + e.status + ')' : navigator.onLine ? '동기화하지 못했어요' : '오프라인이에요. 연결되면 자동으로 동기화해요';
 
-const fp = s => s.trades.map(t => t.id + ':' + (t.updatedAt || 0)).sort().join() + '|' + Object.keys(s.tombs).map(k => k + ':' + s.tombs[k]).sort().join();
-function merge(a, b) { // a = this device, b = remote; both { trades, tombs }
+const fp = s => s.trades.map(t => t.id + ':' + (t.updatedAt || 0)).sort().join() + '|' + Object.keys(s.tombs).map(k => k + ':' + s.tombs[k]).sort().join() + '|' + s.cap.t;
+function merge(a, b) { // a = this device, b = remote; both { trades, tombs, cap }
   const by = {}, dead = { ...b.tombs };
   for (const k in a.tombs) dead[k] = Math.max(dead[k] || 0, a.tombs[k]);
   for (const t of [...b.trades, ...a.trades]) if (!by[t.id] || (t.updatedAt || 0) >= (by[t.id].updatedAt || 0)) by[t.id] = t;
   for (const k in dead) if (by[k] && (by[k].updatedAt || 0) <= dead[k]) delete by[k];
-  return { trades: Object.values(by), tombs: dead };
+  return { trades: Object.values(by), tombs: dead, cap: a.cap.t >= b.cap.t ? a.cap : b.cap };
 }
 { // self-check: the newest edit wins and deletes propagate
-  const m = merge({ trades: [{ id: 'a', updatedAt: 5, n: 'new' }], tombs: { c: 9 } }, { trades: [{ id: 'a', updatedAt: 3, n: 'old' }, { id: 'b', updatedAt: 1 }, { id: 'c', updatedAt: 4 }], tombs: {} });
-  console.assert(m.trades.length === 2 && m.trades.find(t => t.id === 'a').n === 'new' && !m.trades.some(t => t.id === 'c') && m.tombs.c === 9, 'journal: sync merge');
+  const m = merge({ trades: [{ id: 'a', updatedAt: 5, n: 'new' }], tombs: { c: 9 }, cap: { v: 5, t: 9 } }, { trades: [{ id: 'a', updatedAt: 3, n: 'old' }, { id: 'b', updatedAt: 1 }, { id: 'c', updatedAt: 4 }], tombs: {}, cap: { v: 7, t: 3 } });
+  console.assert(m.trades.length === 2 && m.trades.find(t => t.id === 'a').n === 'new' && !m.trades.some(t => t.id === 'c') && m.tombs.c === 9 && m.cap.v === 5, 'journal: sync merge');
 }
 
 const note = (t, isBad = false) => { status = t; bad = isBad; drawSync(); };
@@ -767,7 +833,7 @@ function drawSync() {
   el.textContent = cfg ? (status ? status + ' · ' : '') + cfg.repo : '';
 }
 function adopt(m) {
-  trades = m.trades; tombs = m.tombs; persist();
+  trades = m.trades; tombs = m.tombs; cap = m.cap; persist();
   if (!all().some(t => t.day.startsWith(S.ym))) { const l = all().at(-1); if (l) S.ym = l.day.slice(0, 7); }
   render();
 }
@@ -779,20 +845,20 @@ async function sync() {
     let ok = false;
     for (let i = 0; i < 3 && !ok; i++) {
       const rev0 = rev, r = await gh(FILE);
-      let remote = { trades: [], tombs: {} }, sha;
+      let remote = { trades: [], tombs: {}, cap: { v: 0, t: 0 } }, sha;
       if (r.ok) {
         const j = await r.json(), d = JSON.parse(dec(j.content));
         sha = j.sha;
-        remote = { trades: Array.isArray(d.trades) ? d.trades.filter(t => t && t.id) : [], tombs: d.tombs && typeof d.tombs === 'object' ? d.tombs : {} };
+        remote = { trades: Array.isArray(d.trades) ? d.trades.filter(t => t && t.id) : [], tombs: d.tombs && typeof d.tombs === 'object' ? d.tombs : {}, cap: d.cap && d.cap.v >= 0 ? { v: +d.cap.v, t: +d.cap.t || 0 } : { v: 0, t: 0 } };
       } else if (r.status !== 404) throw fail(r);
-      const m = merge({ trades, tombs }, remote);
+      const m = merge({ trades, tombs, cap }, remote);
       if (fp(m) !== fp(remote)) {
         const w = await gh(FILE, { method: 'PUT', body: JSON.stringify({ message: 'sync', content: enc(JSON.stringify({ v: 1, ...m })), ...(sha ? { sha } : {}) }) });
         if (w.status === 409 || w.status === 422) continue; // another device pushed meanwhile: read and merge again
         if (!w.ok) throw fail(w);
       }
       if (rev !== rev0) continue; // edited on this device while we were talking to GitHub: merge again instead of overwriting it
-      if (fp(m) !== fp({ trades, tombs })) adopt(m);
+      if (fp(m) !== fp({ trades, tombs, cap })) adopt(m);
       ok = true;
     }
     if (ok) note('동기화됨 · ' + new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }));
@@ -830,6 +896,10 @@ $('#vseg').innerHTML = seg([['setup', '전략'], ['tag', '실수'], ['dow', '요
 $('#rseg').innerHTML = seg([['all', '전체'], ['w', '이익'], ['l', '손실']], 'res');
 $('#cursel').innerHTML = seg(CURS.map(c => [c, c]), 'cur');
 $('#imp').onchange = e => { restore(e.target.files[0]); e.target.value = ''; };
+$('#cap').onchange = e => {
+  const v = +e.target.value.replace(/[^0-9.]/g, '') || 0;
+  setCap(v); e.target.value = v ? F.n.format(v) : ''; toast(v ? '시작 자금을 저장했어요' : '시작 자금을 지웠어요');
+};
 $('#tags').innerHTML = MISTAKES.map(m => `<label class="pick"><input type="checkbox" name="tag" value="${m}"><span>${m}</span></label>`).join('');
 render();
 

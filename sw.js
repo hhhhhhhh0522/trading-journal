@@ -1,5 +1,5 @@
 // Offline shell: network first, fall back to the cache. Bump V when the file list changes.
-const V = 'tj-v1', SHELL = ['./', 'index.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png'];
+const V = 'tj-v2', SHELL = ['./', 'index.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(
@@ -9,7 +9,7 @@ self.addEventListener('fetch', e => {
   const r = e.request, u = new URL(r.url), font = u.hostname.endsWith('googleapis.com') || u.hostname.endsWith('gstatic.com');
   if (r.method !== 'GET' || (u.origin !== location.origin && !font)) return;
   e.respondWith(
-    fetch(r).then(res => {
+    fetch(r, { cache: 'no-cache' }).then(res => { // revalidate so a new version shows up right away, not after the host's 10-minute cache
       if (res.ok || res.type === 'opaque') { const copy = res.clone(); caches.open(V).then(c => c.put(r, copy)); }
       return res;
     }).catch(() => caches.match(r, { ignoreSearch: true }).then(hit => hit || (r.mode === 'navigate' ? caches.match('index.html') : Response.error())))
